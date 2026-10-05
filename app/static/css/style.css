@@ -1,0 +1,110 @@
+/* ── ベース ── */
+body {
+  background-color: #f5f7fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+/* ── ナビゲーション ── */
+.navbar-brand {
+  font-size: 1.3rem;
+  letter-spacing: 0.03em;
+}
+
+/* ── サマリーカード ── */
+.bg-income {
+  background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.bg-expense {
+  background: linear-gradient(135deg, #dc3545, #fd7e14);
+}
+
+/* ── バッジ ── */
+.bg-income-badge {
+  background-color: #28a745 !important;
+}
+
+.bg-expense-badge {
+  background-color: #dc3545 !important;
+}
+
+/* ── 金額テキスト色 ── */
+.text-income {
+  color: #28a745;
+}
+
+.text-expense {
+  color: #dc3545;
+}
+
+/* ── カード共通 ── */
+.card {
+  border-radius: 0.75rem;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #e9ecef;
+  border-radius: 0.75rem 0.75rem 0 0 !important;
+  padding: 0.75rem 1rem;
+}
+
+.card-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  border-radius: 0 0 0.75rem 0.75rem !important;
+}
+
+/* ── テーブル ── */
+.table th {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table td {
+  font-size: 0.92rem;
+  vertical-align: middle;
+}
+
+/* ── フォーム ── */
+.form-control:focus,
+.form-select:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* ── ボタン ── */
+.btn {
+  border-radius: 0.5rem;
+}
+
+/* ── アラート ── */
+.alert {
+  border-radius: 0.6rem;
+  border: none;
+}
+
+/* ── フッター ── */
+footer {
+  font-size: 0.8rem;
+}
+
+/* ── レスポンシブ微調整 ── */
+@media (max-width: 576px) {
+  .table th,
+  .table td {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.5rem;
+  }
+}

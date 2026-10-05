@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}{% if action == 'add' %}取引を追加{% else %}取引を編集{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-{% if action == 'add' %}plus-circle{% else %}pencil{% endif %}"></i>
+        {% if action == 'add' %}取引を追加{% else %}取引を編集{% endif %}
+      </div>
+      <div class="card-body p-4">
+
+        <form method="POST" id="transactionForm">
+
+          {# ── 収入 / 支出 タブ ── #}
+          <div class="mb-4">
+            <div class="btn-group w-100" role="group">
+              <input type="radio" class="btn-check" name="type" id="typeExpense"
+                     value="expense" required
+                     {% if not transaction or transaction.type == 'expense' %}checked{% endif %}>
+              <label class="btn btn-outline-danger" for="typeExpense">
+                <i class="bi bi-arrow-up-circle"></i> 支出
+              </label>
+
+              <input type="radio" class="btn-check" name="type" id="typeIncome"
+                     value="income"
+                     {% if transaction and transaction.type == 'income' %}checked{% endif %}>
+              <label class="btn btn-outline-success" for="typeIncome">
+                <i class="bi bi-arrow-down-circle"></i> 収入
+              </label>
+            </div>
+          </div>
+
+          {# ── 日付 ── #}
+          <div class="mb-3">
+            <label for="date" class="form-label">日付 <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="date" name="date"
+                   value="{{ transaction.date.strftime('%Y-%m-%d') if transaction else today }}"
+                   required>
+          </div>
+
+          {# ── 金額 ── #}
+          <div class="mb-3">
+            <label for="amount" class="form-label">金額 <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">¥</span>
+              <input type="number" class="form-control" id="amount" name="amount"
+                     min="1" step="1"
+                     value="{{ transaction.amount if transaction else '' }}"
+                     placeholder="0" required>
+            </div>
+          </div>
+
+          {# ── カテゴリ ── #}
+          <div class="mb-3">
+            <label for="category_id" class="form-label">カテゴリ <span class="text-danger">*</span></label>
+            <select class="form-select" id="category_id" name="category_id" required>
+              <option value="">-- 選択してください --</option>
+              <optgroup label="支出" id="expense_group">
+                {% for cat in expense_categories %}
+                <option value="{{ cat.id }}"
+                  {% if transaction and transaction.category_id == cat.id %}selected{% endif %}>
+                  {{ cat.name }}
+                </option>
+                {% endfor %}
+              </optgroup>
+              <optgroup label="収入" id="income_group">
+                {% for cat in income_categories %}
+                <option value="{{ cat.id }}"
+                  {% if transaction and transaction.category_id == cat.id %}selected{% endif %}>
+                  {{ cat.name }}
+                </option>
+                {% endfor %}
+              </optgroup>
+            </select>
+          </div>
+
+          {# ── メモ ── #}
+          <div class="mb-4">
+            <label for="memo" class="form-label">メモ</label>
+            <input type="text" class="form-control" id="memo" name="memo"
+                   maxlength="200"
+                   value="{{ transaction.memo or '' if transaction else '' }}"
+                   placeholder="任意">
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">
+              <i class="bi bi-check-lg"></i>
+              {% if action == 'add' %}追加する{% else %}更新する{% endif %}
+            </button>
+            <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary">
+              キャンセル
+            </a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 種別切替でカテゴリoptgroupの表示を切り替える
+function updateCategoryVisibility() {
+  const type = document.querySelector('input[name="type"]:checked').value;
+  document.getElementById('expense_group').style.display =
+    type === 'expense' ? '' : 'none';
+  document.getElementById('income_group').style.display =
+    type === 'income' ? '' : 'none';
+
+  // 現在選択中のカテゴリが非表示グループならリセット
+  const sel = document.getElementById('category_id');
+  const selectedOpt = sel.options[sel.selectedIndex];
+  if (selectedOpt && selectedOpt.parentElement.style.display === 'none') {
+    sel.value = '';
+  }
+}
+
+document.querySelectorAll('input[name="type"]').forEach(radio => {
+  radio.addEventListener('change', updateCategoryVisibility);
+});
+updateCategoryVisibility();
+</script>
+{% endblock %}
