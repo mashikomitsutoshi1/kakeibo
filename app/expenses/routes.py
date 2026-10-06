@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from calendar import monthrange
+from collections import defaultdict
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import extract, func
@@ -67,6 +68,46 @@ def index():
                .scalar() or 0)
         monthly_data.append({'label': f'{y}/{m:02d}', 'income': inc, 'expense': exp})
 
+    # 日別グラフ用データ（当月の全日分、取引がない日は0）
+    daily_chart_data = []
+    for day in range(1, monthrange(year, month)[1] + 1):
+        d = date(year, month, day)
+        day_transactions = [t for t in transactions if t.date == d]
+        daily_chart_data.append({
+            'label': f'{day}',
+            'income': sum(t.amount for t in day_transactions if t.type == 'income'),
+            'expense': sum(t.amount for t in day_transactions if t.type == 'expense'),
+        })
+
+    # カテゴリ別収入（グラフ用）
+    income_category_data = (db.session.query(Category.name, func.sum(Transaction.amount))
+                            .join(Transaction, Transaction.category_id == Category.id)
+                            .filter(Transaction.user_id == current_user.id,
+                                    Transaction.type == 'income',
+                                    Transaction.date >= first_day,
+                                    Transaction.date <= last_day)
+                            .group_by(Category.name)
+                            .all())
+
+    # 日付ごとにグループ化
+    # daily_groups: [{ date, transactions, income, expense, balance }, ...]  新しい日順
+    groups = defaultdict(list)
+    for t in transactions:
+        groups[t.date].append(t)
+
+    daily_groups = []
+    for d in sorted(groups.keys(), reverse=True):
+        day_transactions = groups[d]
+        day_income = sum(t.amount for t in day_transactions if t.type == 'income')
+        day_expense = sum(t.amount for t in day_transactions if t.type == 'expense')
+        daily_groups.append({
+            'date': d,
+            'transactions': day_transactions,
+            'income': day_income,
+            'expense': day_expense,
+            'balance': day_income - day_expense,
+        })
+
     # 前後月ナビ用
     prev_month = month - 1 if month > 1 else 12
     prev_year = year if month > 1 else year - 1
@@ -75,10 +116,13 @@ def index():
 
     return render_template('expenses/index.html',
                            transactions=transactions,
+                           daily_groups=daily_groups,
                            total_income=total_income,
                            total_expense=total_expense,
                            balance=balance,
                            category_data=category_data,
+                           income_category_data=income_category_data,
+                           daily_chart_data=daily_chart_data,
                            monthly_data=monthly_data,
                            year=year, month=month,
                            prev_year=prev_year, prev_month=prev_month,

@@ -44,31 +44,82 @@
   </div>
 </div>
 
-{# ── グラフ行 ── #}
-<div class="row g-4 mb-4">
-  <div class="col-md-5">
-    <div class="card shadow-sm h-100">
-      <div class="card-header fw-semibold">カテゴリ別支出</div>
-      <div class="card-body d-flex align-items-center justify-content-center">
-        {% if category_data %}
-          <canvas id="pieChart" style="max-height:260px;"></canvas>
-        {% else %}
-          <p class="text-muted my-4">支出データがありません</p>
-        {% endif %}
-      </div>
-    </div>
+{# ── グラフ（タブ切り替え） ── #}
+<div class="card shadow-sm mb-4">
+  <div class="card-header p-0">
+    <ul class="nav nav-tabs card-header-tabs ms-0" id="chartTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-daily" data-bs-toggle="tab"
+                data-bs-target="#panel-daily" type="button" role="tab">
+          <i class="bi bi-bar-chart-line"></i>
+          <span class="d-none d-sm-inline"> 日別収支</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-exp-cat" data-bs-toggle="tab"
+                data-bs-target="#panel-exp-cat" type="button" role="tab">
+          <i class="bi bi-pie-chart"></i>
+          <span class="d-none d-sm-inline"> 支出内訳</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-inc-cat" data-bs-toggle="tab"
+                data-bs-target="#panel-inc-cat" type="button" role="tab">
+          <i class="bi bi-pie-chart-fill"></i>
+          <span class="d-none d-sm-inline"> 収入内訳</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-monthly" data-bs-toggle="tab"
+                data-bs-target="#panel-monthly" type="button" role="tab">
+          <i class="bi bi-graph-up"></i>
+          <span class="d-none d-sm-inline"> 月別推移</span>
+        </button>
+      </li>
+    </ul>
   </div>
-  <div class="col-md-7">
-    <div class="card shadow-sm h-100">
-      <div class="card-header fw-semibold">月別推移（過去6か月）</div>
-      <div class="card-body">
-        <canvas id="barChart" style="max-height:260px;"></canvas>
-      </div>
+  <div class="card-body tab-content" style="min-height:300px;">
+
+    {# ── タブ1: 日別収支 ── #}
+    <div class="tab-pane fade show active" id="panel-daily" role="tabpanel">
+      <div class="chart-title text-muted small mb-2">{{ year }}年{{ month }}月 — 日別収支</div>
+      <canvas id="dailyChart" style="max-height:280px;"></canvas>
     </div>
+
+    {# ── タブ2: カテゴリ別支出 ── #}
+    <div class="tab-pane fade" id="panel-exp-cat" role="tabpanel">
+      <div class="chart-title text-muted small mb-2">{{ year }}年{{ month }}月 — カテゴリ別支出</div>
+      {% if category_data %}
+        <div class="d-flex justify-content-center">
+          <canvas id="expPieChart" style="max-height:280px; max-width:400px;"></canvas>
+        </div>
+      {% else %}
+        <p class="text-center text-muted pt-5">支出データがありません</p>
+      {% endif %}
+    </div>
+
+    {# ── タブ3: カテゴリ別収入 ── #}
+    <div class="tab-pane fade" id="panel-inc-cat" role="tabpanel">
+      <div class="chart-title text-muted small mb-2">{{ year }}年{{ month }}月 — カテゴリ別収入</div>
+      {% if income_category_data %}
+        <div class="d-flex justify-content-center">
+          <canvas id="incPieChart" style="max-height:280px; max-width:400px;"></canvas>
+        </div>
+      {% else %}
+        <p class="text-center text-muted pt-5">収入データがありません</p>
+      {% endif %}
+    </div>
+
+    {# ── タブ4: 月別推移 ── #}
+    <div class="tab-pane fade" id="panel-monthly" role="tabpanel">
+      <div class="chart-title text-muted small mb-2">月別推移（過去6か月）</div>
+      <canvas id="monthlyBarChart" style="max-height:280px;"></canvas>
+    </div>
+
   </div>
 </div>
 
-{# ── 取引一覧 ── #}
+{# ── 取引一覧（日別グループ） ── #}
 <div class="card shadow-sm">
   <div class="card-header d-flex justify-content-between align-items-center">
     <span class="fw-semibold">取引一覧</span>
@@ -77,55 +128,76 @@
     </a>
   </div>
   <div class="card-body p-0">
-    {% if transactions %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>日付</th>
-            <th>種別</th>
-            <th>カテゴリ</th>
-            <th class="text-end">金額</th>
-            <th>メモ</th>
-            <th class="text-center">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for t in transactions %}
-          <tr>
-            <td class="text-nowrap">{{ t.date.strftime('%m/%d') }}</td>
-            <td>
-              {% if t.type == 'income' %}
-                <span class="badge bg-income-badge">収入</span>
-              {% else %}
-                <span class="badge bg-expense-badge">支出</span>
-              {% endif %}
-            </td>
-            <td>{{ t.category.name }}</td>
-            <td class="text-end fw-semibold
-              {{ 'text-income' if t.type == 'income' else 'text-expense' }}">
-              {% if t.type == 'income' %}+{% else %}-{% endif %}¥{{ "{:,}".format(t.amount) }}
-            </td>
-            <td class="text-muted small">{{ t.memo or '' }}</td>
-            <td class="text-center text-nowrap">
-              <a href="{{ url_for('expenses.edit_transaction', transaction_id=t.id) }}"
-                 class="btn btn-outline-secondary btn-sm me-1">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <form method="POST"
-                    action="{{ url_for('expenses.delete_transaction', transaction_id=t.id) }}"
-                    class="d-inline"
-                    onsubmit="return confirm('削除してよいですか？')">
-                <button type="submit" class="btn btn-outline-danger btn-sm">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </form>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    {% if daily_groups %}
+      {% for group in daily_groups %}
+      {# ── 日付ヘッダー（小計付き） ── #}
+      <div class="d-flex align-items-center justify-content-between px-3 py-2 day-header">
+        <span class="fw-bold text-secondary">
+          {{ group.date.strftime('%m月%d日') }}
+          <span class="text-muted fw-normal small ms-1">
+            ({{ ['月','火','水','木','金','土','日'][group.date.weekday()] }})
+          </span>
+        </span>
+        <span class="d-flex gap-3 small">
+          {% if group.income > 0 %}
+          <span class="text-income fw-semibold">
+            収入 +¥{{ "{:,}".format(group.income) }}
+          </span>
+          {% endif %}
+          {% if group.expense > 0 %}
+          <span class="text-expense fw-semibold">
+            支出 -¥{{ "{:,}".format(group.expense) }}
+          </span>
+          {% endif %}
+          <span class="fw-bold {{ 'text-income' if group.balance >= 0 else 'text-expense' }}">
+            収支 {% if group.balance >= 0 %}+{% endif %}¥{{ "{:,}".format(group.balance) }}
+          </span>
+        </span>
+      </div>
+
+      {# ── その日の取引行 ── #}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 day-table">
+          <tbody>
+            {% for t in group.transactions %}
+            <tr>
+              <td class="ps-4">
+                {% if t.type == 'income' %}
+                  <span class="badge bg-income-badge">収入</span>
+                {% else %}
+                  <span class="badge bg-expense-badge">支出</span>
+                {% endif %}
+              </td>
+              <td>{{ t.category.name }}</td>
+              <td class="text-end fw-semibold
+                {{ 'text-income' if t.type == 'income' else 'text-expense' }}">
+                {% if t.type == 'income' %}+{% else %}-{% endif %}¥{{ "{:,}".format(t.amount) }}
+              </td>
+              <td class="text-muted small">{{ t.memo or '' }}</td>
+              <td class="text-center text-nowrap pe-3">
+                <a href="{{ url_for('expenses.edit_transaction', transaction_id=t.id) }}"
+                   class="btn btn-outline-secondary btn-sm me-1">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <form method="POST"
+                      action="{{ url_for('expenses.delete_transaction', transaction_id=t.id) }}"
+                      class="d-inline"
+                      onsubmit="return confirm('削除してよいですか？')">
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if not loop.last %}
+      <hr class="my-0">
+      {% endif %}
+      {% endfor %}
     {% else %}
       <p class="text-center text-muted py-4">この月の取引はありません</p>
     {% endif %}
@@ -136,64 +208,159 @@
 
 {% block scripts %}
 <script>
-// ── 円グラフ（カテゴリ別支出）──
-{% if category_data %}
-const pieCtx = document.getElementById('pieChart').getContext('2d');
-new Chart(pieCtx, {
-  type: 'doughnut',
-  data: {
-    labels: {{ category_data | map(attribute=0) | list | tojson }},
-    datasets: [{
-      data: {{ category_data | map(attribute=1) | list | tojson }},
-      backgroundColor: [
-        '#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF',
-        '#FF9F40','#C9CBCF','#FF6384','#36A2EB','#FFCE56'
-      ],
-      borderWidth: 2,
-    }]
-  },
-  options: {
-    plugins: {
-      legend: { position: 'bottom', labels: { font: { size: 11 } } }
-    }
-  }
-});
-{% endif %}
+const CHART_COLORS = [
+  '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f',
+  '#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ac'
+];
 
-// ── 棒グラフ（月別推移）──
-const barCtx = document.getElementById('barChart').getContext('2d');
-const monthlyData = {{ monthly_data | tojson }};
-new Chart(barCtx, {
-  type: 'bar',
-  data: {
-    labels: monthlyData.map(d => d.label),
-    datasets: [
-      {
-        label: '収入',
-        data: monthlyData.map(d => d.income),
-        backgroundColor: 'rgba(40,167,69,0.7)',
-        borderRadius: 4,
+// ── タブ1: 日別収支棒グラフ ──
+(function() {
+  const data = {{ daily_chart_data | tojson }};
+  const ctx = document.getElementById('dailyChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.label + '日'),
+      datasets: [
+        {
+          label: '収入',
+          data: data.map(d => d.income),
+          backgroundColor: 'rgba(40,167,69,0.75)',
+          borderRadius: 3,
+          stack: 'stack',
+        },
+        {
+          label: '支出',
+          data: data.map(d => -d.expense),   // 下向きに描画
+          backgroundColor: 'rgba(220,53,69,0.75)',
+          borderRadius: 3,
+          stack: 'stack',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = Math.abs(ctx.parsed.y);
+              return ctx.dataset.label + ': ¥' + v.toLocaleString();
+            }
+          }
+        }
       },
-      {
-        label: '支出',
-        data: monthlyData.map(d => d.expense),
-        backgroundColor: 'rgba(220,53,69,0.7)',
-        borderRadius: 4,
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    plugins: { legend: { position: 'top' } },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: v => '¥' + v.toLocaleString()
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          ticks: {
+            callback: v => '¥' + Math.abs(v).toLocaleString()
+          }
         }
       }
     }
-  }
-});
+  });
+})();
+
+// ── タブ2: カテゴリ別支出 ──
+{% if category_data %}
+(function() {
+  const ctx = document.getElementById('expPieChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ category_data | map(attribute=0) | list | tojson }},
+      datasets: [{
+        data: {{ category_data | map(attribute=1) | list | tojson }},
+        backgroundColor: CHART_COLORS,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 12 }, boxWidth: 14 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const pct = ((ctx.parsed / total) * 100).toFixed(1);
+              return ctx.label + ': ¥' + ctx.parsed.toLocaleString() + ' (' + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+{% endif %}
+
+// ── タブ3: カテゴリ別収入 ──
+{% if income_category_data %}
+(function() {
+  const ctx = document.getElementById('incPieChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ income_category_data | map(attribute=0) | list | tojson }},
+      datasets: [{
+        data: {{ income_category_data | map(attribute=1) | list | tojson }},
+        backgroundColor: CHART_COLORS,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 12 }, boxWidth: 14 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const pct = ((ctx.parsed / total) * 100).toFixed(1);
+              return ctx.label + ': ¥' + ctx.parsed.toLocaleString() + ' (' + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+{% endif %}
+
+// ── タブ4: 月別推移棒グラフ ──
+(function() {
+  const data = {{ monthly_data | tojson }};
+  const ctx = document.getElementById('monthlyBarChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.label),
+      datasets: [
+        {
+          label: '収入',
+          data: data.map(d => d.income),
+          backgroundColor: 'rgba(40,167,69,0.75)',
+          borderRadius: 4,
+        },
+        {
+          label: '支出',
+          data: data.map(d => d.expense),
+          backgroundColor: 'rgba(220,53,69,0.75)',
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { callback: v => '¥' + v.toLocaleString() }
+        }
+      }
+    }
+  });
+})();
 </script>
 {% endblock %}

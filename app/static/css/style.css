@@ -108,3 +108,41 @@ footer {
     padding: 0.4rem 0.5rem;
   }
 }
+
+/* ── 日別グループ ── */
+.day-header {
+  background-color: #f0f4f8;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.88rem;
+}
+
+.day-table td {
+  font-size: 0.9rem;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.day-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── グラフタブ ── */
+#chartTabs .nav-link {
+  border-radius: 0;
+  padding: 0.6rem 1rem;
+  font-size: 0.88rem;
+  color: #6c757d;
+  border-bottom: 2px solid transparent;
+}
+
+#chartTabs .nav-link.active {
+  color: #0d6efd;
+  background: #fff;
+  border-bottom: 2px solid #0d6efd;
+}
+
+.chart-title {
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
